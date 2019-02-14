@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CodeBuild Configuration
+Metadata:
+  Copyright:
+    Value: '(c) 2019 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.'
+  Stack:
+    Value: 1
+  VersionDate:
+    Value: 20190207
+  Identifier:
+    Value: build
+  Input:
+    Description: Input of all required parameters for CodeBuild
+  Output:
+    Description: N/A
+Parameters:
+  pBuildProjectName:
+    Description: The name of the CodeBuild Project
+    Type: String
+    Default: ""
+  pBuildArtifactsType:
+    Description: The type of build output artifact.
+    Type: String
+    Default: ""
+  pBuildArtifactsLocation:
+    Description: A unique S3 bucket name for the location of the build output artifact.
+    Type: String
+    Default: ""
+  pBuildSourceType:
+    Description: The type of repository that contains the source code to build.
+    Type: String
+    Default: ""
+  pBuildSourceLocation:
+    Description: The location of the source code for the specified repository type.
+    Type: String
+    Default: ""
+  pBuildEnvironmentType:
+    Description: The type of build environment.
+    Type: String
+    Default: ""
+  pBuildEnvironmentImage:
+    Default: The Docker image identifier used by this build environment.
+    Type: String
+    Default: ""
+  pBuildComputeType:
+    Default: CPU Cores and Memory used by this build environment.
+    Type: String
+    Default: ""
+  pBuildSpec:
+    Default: Build specification file to use.
+    Type: String
+    Default: ""
+Resources:
+  rBuildArtifactsLocation:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref pBuildArtifactsLocation
+  rBuildServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "codebuild.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies: 
+        - 
+          PolicyName: "root"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - 'arn:aws:logs:us-east-1:465732234271:log-group:/aws/codebuild/${pBuildProjectName}'
+                  - 'arn:aws:logs:us-east-1:465732234271:log-group:/aws/codebuild/${pBuildProjectName}:*'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+              - Effect: Allow
+                Resource:
+                  - 'arn:aws:s3:::codepipeline-us-east-1-*'
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetBucketAcl'
+                  - 's3:GetBucketLocation'
+              - Effect: Allow
+                Resource:
+                  - '*'
+                Action:
+                  - 'codecommit:GitPull'
+              - Effect: Allow
+                Resource:
+                  - !GetAtt rBuildArtifactsLocation.Arn
+                  - !Join [ "", [ !GetAtt rBuildArtifactsLocation.Arn, "/*"] ]
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetBucketAcl'
+                  - 's3:GetBucketLocation'
+  rCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:       
+      Name: !Ref pBuildProjectName
+      ServiceRole: !GetAtt rBuildServiceRole.Arn
+      Artifacts:
+        Type: !Ref pBuildArtifactsType
+        Location: !Ref rBuildArtifactsLocation
+      Environment:
+        Type: !Ref pBuildEnvironmentType
+        ComputeType: !Ref pBuildComputeType
+        Image: !Ref pBuildEnvironmentImage
+      Source:
+        Type: !Ref pBuildSourceType
+        Location: !Ref pBuildSourceLocation
+        BuildSpec: !Ref pBuildSpec
+      TimeoutInMinutes: 10
+Outputs:
+  oBuildArtifactsLocation:
+    Value: !Ref rBuildArtifactsLocation

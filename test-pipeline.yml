@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Pipeline Configuration
+Metadata:
+  Copyright:
+    Value: '(c) 2019 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.'
+  Stack:
+    Value: 2
+  VersionDate:
+    Value: 20190207
+  Identifier:
+    Value: pipeline
+  Input:
+    Description: Input of all required parameters for CodePipeline
+  Output:
+    Description: N/A
+Parameters:
+  pPipelineServiceRole:
+    Description: Role ARN for the CodePipeline Service Role
+    Type: String
+    Default: ""
+  pArtifactStore:
+    Description: Unique name for S3 bucket that will store pipeline artifacts.
+    Type: String
+    Default: ""
+Resources:
+  rArtifactStore:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref pArtifactStore
+  rPipeLine:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Ref pPipelineServiceRole
+      ArtifactStore:
+        ArtifactStore
+Outputs:
+  oArtifactStore:
+    Value: !Ref rArtifactStore

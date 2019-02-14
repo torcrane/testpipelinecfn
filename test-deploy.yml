@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Test Pipeline Deployment
+Metadata:
+  Copyright:
+    Value: '(c) 2019 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.'
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'General Settings'
+        Parameters:
+          - pTemplateOriginBucket
+    ParameterLabels:
+      pTemplateOriginBucket:
+        default: Origin Bucket Location for Templates
+
+  Stack:
+    Value: 0
+  VersionDate:
+    Value: 20190207
+  Identifier:
+    Value: main
+  Input:
+    Description: Input of all required parameters in nested stacks
+  Output:
+    Description: N/A
+Parameters:
+  pTemplateOriginBucket:
+    Description: Origin Bucket for Stage VPC Template(s)
+    Type: String
+    Default: project-garter
+Resources:
+
+Outputs:
+  oTemplateType:
+    Value: Test Main

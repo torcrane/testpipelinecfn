@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM Configuration for Pipeline
+Metadata:
+  Copyright:
+    Value: '(c) 2019 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.'
+  Stack:
+    Value: 1
+  VersionDate:
+    Value: 20190207
+  Identifier:
+    Value: iam
+  Input:
+    Description: Input of all required parameters for IAM roles and policies
+  Output:
+    Description: N/A
+Resources:
+  rPipelineServicePolicy
+
+  rPipelineServiceRole
+
+Outputs:
+  oPipelineServiceRole:
+    Value: !Ref rPipelineServiceRole

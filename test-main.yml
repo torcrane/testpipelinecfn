@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Test Pipeline Deployment
+Metadata:
+  Copyright:
+    Value: '(c) 2019 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.'
+  Stack:
+    Value: 0
+  VersionDate:
+    Value: 20190207
+  Identifier:
+    Value: main
+  Input:
+    Description: Input of all required parameters in nested stacks
+  Output:
+    Description: N/A
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'General Settings'
+        Parameters:
+          - pTemplateOriginBucket
+      - Label:
+          default: 'CodeBuild Settings'
+        Parameters:
+          - pBuildProjectName
+          - pBuildArtifactsType
+          - pBuildArtifactsLocation
+          - pBuildSourceType
+          - pBuildSourceLocation
+          - pBuildEnvironmentType
+    ParameterLabels:
+      pTemplateOriginBucket:
+        default: Template Bucket
+      pBuildProjectName:
+        default: CodeBuild Project Name
+      pBuildArtifactsType:
+        default: Artifacts Type
+      pBuildSourceLocation:
+        default: Artifacts Bucket
+      pBuildSourceType:
+        default: Source Type
+      pBuildSourceLocation:
+        default: Source Location
+      pBuildEnvironmentType:
+        default: Build Environment Type
+Parameters:
+  pTemplateOriginBucket:
+    Description: Name of S3 bucket that holds the CloudFormation templates
+    Type: String
+    Default: testpipelinetemplates
+  pBuildProjectName:
+    Description: The name of the CodeBuild Project
+    Type: String
+    Default: TestBuild
+  pBuildArtifactsType:
+    Description: The type of build output artifact.
+    Type: String
+    AllowedValues:
+      - CODEPIPELINE
+      - S3
+      - NO_ARTIFACTS
+    Default: S3
+  pBuildArtifactsLocation:
+    Description: A unique S3 bucket name for the location of the build output artifact.
+    Type: String
+    Default: artifacts-bucket-tc-test
+  pBuildSourceType:
+    Description: The type of repository that contains the source code to build.
+    Type: String
+    AllowedValues:
+      - CODECOMMIT
+      - CODEPIPELINE
+      - GITHUB
+      - BITBUCKET
+      - S3
+      - NO_SOURCE
+    Default: CODECOMMIT
+  pBuildSourceLocation:
+    Description: The location of the source code for the specified repository type.
+    Type: String
+    Default: https://git-codecommit.us-east-1.amazonaws.com/v1/repos/edX-Deploying
+  pBuildEnvironmentType:
+    Description: The type of build environment.
+    Type: String
+    AllowedValues:
+      - LINUX_CONTAINER
+      - WINDOWS_CONTAINER
+    Default: LINUX_CONTAINER
+  pBuildEnvironmentImage:
+    Default: The Docker image identifier used by this build environment.
+    Type: String
+    Default: amazonlinux:2017.09
+  pBuildComputeType:
+    Default: CPU Cores and Memory used by this build environment.
+    Type: String
+    AllowedValues:
+      - BUILD_GENERAL1_SMALL
+      - BUILD_GENERAL1_MEDIUM
+      - BUILD_GENERAL1_LARGE
+    Default: BUILD_GENERAL1_SMALL
+  pBuildSpec:
+    Default: Build specification file to use.
+    Type: String
+    Default: BuildSpecs/unittest-buildspec.yml
+Mappings:
+  mAWSInfoRegionMap:
+    us-east-1:
+      Partition: aws
+      BuildS3URL: https://s3.amazonaws.com
+      RegionURL: amazonaws.com
+      ELBPrincipal: '127311923021'
+    us-east-2:
+      Partition: aws
+      BuildS3URL: https://s3.amazonaws.com
+      RegionURL: amazonaws.com
+      ELBPrincipal: '033677994240'
+    us-gov-west-1:
+      Partition: aws-us-gov
+      BuildS3URL: https://s3-us-gov-west-1.amazonaws.com
+      RegionURL: amazonaws.com
+      ELBPrincipal: '048591011584'
+    us-iso-east-1:
+      Partition: aws-iso
+      BuildS3URL: https://s3.us-iso-east-1.c2s.ic.gov
+      RegionURL: c2s.ic.gov
+      ELBPrincipal: '770363063475'
+Resources:
+  rBuildTemplate:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub
+        - ${BuildS3URL}/${pTemplateOriginBucket}/templates/test-build.yml
+        - BuildS3URL:
+            !FindInMap
+            - mAWSInfoRegionMap
+            - !Ref AWS::Region
+            - BuildS3URL
+      TimeoutInMinutes: 20
+      Parameters:
+        pBuildProjectName: !Ref pBuildProjectName
+        pBuildArtifactsType: !Ref pBuildArtifactsType
+        pBuildArtifactsLocation: !Ref pBuildArtifactsLocation
+        pBuildSourceType: !Ref pBuildSourceType
+        pBuildSourceLocation: !Ref pBuildSourceLocation
+        pBuildEnvironmentType: !Ref pBuildEnvironmentType
+        pBuildEnvironmentImage: !Ref pBuildEnvironmentImage
+        pBuildComputeType: !Ref pBuildComputeType
+        pBuildSpec: !Ref pBuildSpec
+  # rPipelineTemplate:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL:
+  #       !Sub
+  #       - ${BuildS3URL}/${pTemplateOriginBucket}/templates/test-pipeline.yml
+  #       - BuildS3URL:
+  #           !FindInMap
+  #           - mAWSInfoRegionMap
+  #           - !Ref AWS::Region
+  #           - BuildS3URL
+  #     TimeoutInMinutes: 20
+  #     Parameters:
+  #       pPipelineServiceRole: !GetAtt
+  #                             - rIAMTemplate
+  #                             - Outputs.oPipelineServiceRole
+  #       pArtifactStore: !Ref pArtifactStore
+Outputs:
+  oTemplateType:
+    Value: Test Main
